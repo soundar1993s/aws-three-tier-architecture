@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8'>
+  <title>Feedback Form</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 500px; margin: 60px auto; }
+    input, textarea { width:100%; padding:10px; margin:8px 0; box-sizing:border-box; }
+    button { background:#2563EB; color:#fff; padding:12px 28px; border:none; cursor:pointer; }
+    #msg { margin-top:12px; font-weight:bold; }
+  </style>
+</head>
+<body>
+  <h2>Feedback Form</h2>
+  <input id='name'     placeholder='Your Name' />
+  <input id='email'    placeholder='Your Email' type='email' />
+  <textarea id='feedback' rows='4' placeholder='Your Feedback'></textarea>
+  <button onclick='submit()'>Submit</button>
+  <p id='msg'></p>
+  <script>
+    function submit() {
+      const name     = document.getElementById('name').value;
+      const email    = document.getElementById('email').value;
+      const feedback = document.getElementById('feedback').value;
+      fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, feedback })
+      })
+      .then(r => r.json())
+      .then(d => { document.getElementById('msg').innerText = d.message; })
+      .catch(() => { document.getElementById('msg').innerText = 'Error submitting.'; });
+    }
+  </script>
+</body>
+</html>
