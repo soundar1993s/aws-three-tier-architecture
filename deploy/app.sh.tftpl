@@ -1,0 +1,44 @@
+#!/bin/bash
+set -euo pipefail
+export DEBIAN_FRONTEND=noninteractive
+apt-get -o Acquire::Retries=5 update
+apt-get -o Acquire::Retries=5 install -y python3-venv default-mysql-client curl
+install -d /opt/feedback
+python3 -m venv /opt/feedback/venv
+/opt/feedback/venv/bin/pip install Flask 'PyMySQL[rsa]' gunicorn boto3
+curl -fsSL --retry 5 https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o /opt/feedback/rds-ca.pem
+
+cat > /opt/feedback/app.py <<'PROJECT_APP'
+${app_code}
+PROJECT_APP
+cat > /opt/feedback/database.py <<'PROJECT_DB'
+${database_code}
+PROJECT_DB
+cat > /opt/feedback/feedback.env <<'PROJECT_ENV'
+AWS_REGION=${aws_region}
+DB_HOST=${database_host}
+WRITER_SECRET=${writer_secret}
+MASTER_SECRET=${master_secret}
+PROJECT_ENV
+
+cat > /etc/systemd/system/feedback.service <<'PROJECT_SERVICE'
+[Unit]
+Description=Feedback API
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/feedback
+EnvironmentFile=/opt/feedback/feedback.env
+ExecStart=/opt/feedback/venv/bin/gunicorn --workers 2 --bind 0.0.0.0:5000 --access-logfile - app:app
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
+PROJECT_SERVICE
+systemctl daemon-reload
+systemctl enable --now feedback.service

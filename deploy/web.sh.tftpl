@@ -1,0 +1,20 @@
+#!/bin/bash
+set -euo pipefail
+export DEBIAN_FRONTEND=noninteractive
+apt-get -o Acquire::Retries=5 update
+apt-get -o Acquire::Retries=5 install -y nginx
+cat > /usr/share/nginx/html/index.html <<'PROJECT_HTML'
+${index_html}
+PROJECT_HTML
+cat > /etc/nginx/nginx.conf <<'PROJECT_NGINX'
+${nginx_conf}
+PROJECT_NGINX
+for attempt in $(seq 1 30); do
+    if nginx -t; then
+        systemctl enable nginx
+        systemctl restart nginx
+        exit 0
+    fi
+    sleep 5
+done
+exit 1

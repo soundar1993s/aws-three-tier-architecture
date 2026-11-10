@@ -15,6 +15,9 @@ The architecture separates the application into:
 It also uses Amazon VPC, Internet Gateway, NAT Gateway, Route Tables,
 Security Groups, and Application Load Balancers.
 
+The Terraform configuration in this repository provisions the three tiers.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for setup, database initialization, and verification.
+
 ------------------------------------------------------------------------
 
 ## Architecture
@@ -40,7 +43,7 @@ Security Groups, and Application Load Balancers.
                             v
                  +----------------------+
                  |    INTERNAL ALB      |
-                 |      TCP : 5000      |
+                 |      HTTP : 80       |
                  +----------+-----------+
                             |
                   +---------+---------+
@@ -107,22 +110,22 @@ Region: ap-south-1
 
   Name              CIDR          AZ
   ----------------- ------------- -------------
-  Public-Subnet-A   10.0.1.0/24   ap-south-1a
-  Public-Subnet-B   10.0.2.0/24   ap-south-1b
+  Public-Subnet-A   10.0.0.0/23   ap-south-1a
+  Public-Subnet-B   10.0.2.0/23   ap-south-1b
 
 ### Private Application Subnets
 
   Name           CIDR          AZ
   -------------- ------------- -------------
-  App-Subnet-A   10.0.3.0/24   ap-south-1a
-  App-Subnet-B   10.0.4.0/24   ap-south-1b
+  App-Subnet-A   10.0.4.0/23   ap-south-1a
+  App-Subnet-B   10.0.6.0/23   ap-south-1b
 
 ### Private Database Subnets
 
   Name          CIDR          AZ
   ------------- ------------- -------------
-  DB-Subnet-A   10.0.5.0/24   ap-south-1a
-  DB-Subnet-B   10.0.6.0/24   ap-south-1b
+  DB-Subnet-A   10.0.8.0/23    ap-south-1a
+  DB-Subnet-B   10.0.10.0/23   ap-south-1b
 
 ------------------------------------------------------------------------
 
@@ -171,10 +174,8 @@ access.
   Security Group      Port Source
   ----------------- ------ ------------------
   Public ALB SG         80 Internet
-  Public ALB SG        443 Internet
   Web SG                80 Public ALB SG
-  Web SG                22 Administrator IP
-  Internal ALB SG     5000 Web SG
+  Internal ALB SG       80 Web SG
   App SG              5000 Internal ALB SG
   DB SG               3306 App SG
 
@@ -300,7 +301,7 @@ instances.
 Web EC2
    |
    v
-Internal ALB : 5000
+Internal ALB : HTTP 80
    |
    +---- App EC2-A
    |
@@ -553,8 +554,6 @@ Possible improvements include:
 -   HTTPS using AWS Certificate Manager
 -   CloudWatch monitoring
 -   CI/CD deployment
--   AWS Systems Manager Session Manager
--   Terraform or CloudFormation infrastructure automation
 
 ------------------------------------------------------------------------
 
